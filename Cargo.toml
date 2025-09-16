@@ -1,0 +1,9 @@
+[package]
+name = "sdf-renderer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tufa = { version = "0.1.2", features = ["interactive"] }
+encase = { version = "0.10.0", features = ["nalgebra"] }
+anyhow = "1.0.99"
