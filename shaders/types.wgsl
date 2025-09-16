@@ -1,6 +1,7 @@
 struct Uniform {
     window: vec2<u32>,
-    camera: Camera
+    camera: Camera,
+    t: f32
 }
 
 struct Camera {

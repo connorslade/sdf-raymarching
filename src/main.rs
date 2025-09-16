@@ -1,4 +1,4 @@
-use std::{borrow::Cow, mem};
+use std::{borrow::Cow, mem, time::Instant};
 
 use anyhow::Result;
 use encase::ShaderType;
@@ -24,12 +24,14 @@ struct App {
     uniform: UniformBuffer<Uniform>,
 
     camera: PerspectiveCamera,
+    startup: Instant,
 }
 
 #[derive(ShaderType)]
 struct Uniform {
     window: Vector2<u32>,
     camera: Camera,
+    t: f32,
 }
 
 #[derive(ShaderType)]
@@ -67,6 +69,7 @@ fn main() -> Result<()> {
             pipeline,
             uniform,
             camera: PerspectiveCamera::default(),
+            startup: Instant::now(),
         },
     );
 
@@ -80,6 +83,7 @@ impl Interactive for App {
         self.uniform.upload(&Uniform {
             window: Vector2::new(size.width, size.height),
 
+            t: self.startup.elapsed().as_secs_f32(),
             camera: Camera {
                 pos: self.camera.position,
                 pitch: self.camera.pitch,

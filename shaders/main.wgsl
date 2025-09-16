@@ -1,17 +1,36 @@
 @group(0) @binding(0) var<uniform> ctx: Uniform;
 
-const PI: f32 = 3.1415926538;
+const π: f32 = 3.1415926538;
+const ε: f32 = 0.01;
 
 @fragment
 fn frag(in: VertexOutput) -> @location(0) vec4<f32> {
     let ray = ray_direction(in.uv);
     var pos = ctx.camera.pos;
 
-    for (var i = 0; i < 100; i++) {
-        let val = field(pos);
-        if val < 0.1 { return vec4(1.0); }
+    for (var i = 0; i < 50; i++) {
+        let dist = field(pos);
+        if dist < 0.01 {
+            // approx normal dir in world space
+            let dx = dist - field(pos + vec3(ε, 0, 0));
+            let dy = dist - field(pos + vec3(0, ε, 0));
+            let dz = dist - field(pos + vec3(0, 0, ε));
+            let normal = normalize(vec3(dx, dy, dz));
 
-        pos += ray * 0.1;
+            // blinn phong lighting
+            let light_dir = normalize(vec3f(-1));
+            let diffuse = max(dot(normal, light_dir), 0.0);
+
+            let reflect_dir = reflect(-light_dir, normal);
+            let specular = pow(max(dot(light_dir, reflect_dir), 0.0), 32.0);
+
+            let color = vec3(0.0, 0.0, 1.0);
+            let intensity = (diffuse + specular + 0.1) * color;
+
+            return vec4(intensity, 1.0);
+        }
+
+        pos += ray * dist;
     }
 
     return vec4(0.0);
