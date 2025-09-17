@@ -5,12 +5,12 @@ use encase::ShaderType;
 use tufa::{
     bindings::buffer::UniformBuffer,
     export::{
-        egui::{Context, Window},
+        egui::{Context, Key, Slider, Window},
         nalgebra::{Vector2, Vector3},
         wgpu::{PowerPreference, RenderPass, ShaderModuleDescriptor, ShaderSource, ShaderStages},
         winit::{
             event::{DeviceEvent, DeviceId},
-            window::WindowAttributes,
+            window::{CursorGrabMode, WindowAttributes},
         },
     },
     gpu::Gpu,
@@ -24,13 +24,18 @@ struct App {
     uniform: UniformBuffer<Uniform>,
 
     camera: PerspectiveCamera,
+    cursor_locked: bool,
+
     startup: Instant,
     last_frame: Instant,
+    steps: u32,
 }
 
 #[derive(ShaderType)]
 struct Uniform {
     window: Vector2<u32>,
+    steps: u32,
+
     camera: Camera,
     t: f32,
 }
@@ -69,9 +74,13 @@ fn main() -> Result<()> {
         App {
             pipeline,
             uniform,
+
             camera: PerspectiveCamera::default(),
+            cursor_locked: true,
+
             startup: Instant::now(),
             last_frame: Instant::now(),
+            steps: 100,
         },
     );
 
@@ -81,9 +90,14 @@ fn main() -> Result<()> {
 
 impl Interactive for App {
     fn render(&mut self, gcx: GraphicsCtx, render_pass: &mut RenderPass) {
+        let grab_mode = [CursorGrabMode::None, CursorGrabMode::Locked][self.cursor_locked as usize];
+        gcx.window.set_cursor_grab(grab_mode).unwrap();
+        gcx.window.set_cursor_visible(!self.cursor_locked);
+
         let size = gcx.window.inner_size();
         self.uniform.upload(&Uniform {
             window: Vector2::new(size.width, size.height),
+            steps: self.steps,
 
             t: self.startup.elapsed().as_secs_f32(),
             camera: Camera {
@@ -99,15 +113,17 @@ impl Interactive for App {
     }
 
     fn device_event(&mut self, _gcx: GraphicsCtx, _device_id: DeviceId, event: &DeviceEvent) {
-        self.camera.device_event(event);
+        self.cursor_locked.then(|| self.camera.device_event(event));
     }
 
     fn ui(&mut self, _gcx: GraphicsCtx, ctx: &Context) {
+        ctx.input(|i| self.cursor_locked ^= i.key_pressed(Key::Escape));
         self.camera.update(ctx);
 
         Window::new("SDF Raymarching").show(ctx, |ui| {
             let fps = self.last_frame.elapsed().as_secs_f32().recip();
             ui.label(format!("FPS: {fps:.1}",));
+            ui.add(Slider::new(&mut self.steps, 0..=1000));
             self.camera.ui(ui, "Camera");
         });
 

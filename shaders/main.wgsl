@@ -7,7 +7,7 @@ fn frag(in: VertexOutput) -> @location(0) vec4<f32> {
     let ray = ray_direction(vec2(in.uv.x, 1 - in.uv.y) - 0.5);
     var pos = ctx.camera.pos;
 
-    for (var i = 0; i < 100; i++) {
+    for (var i = 0u; i < ctx.steps; i++) {
         let hit = field(pos);
         let dist = hit.dist;
 

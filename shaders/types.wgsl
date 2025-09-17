@@ -1,5 +1,7 @@
 struct Uniform {
     window: vec2<u32>,
+    steps: u32,
+
     camera: Camera,
     t: f32
 }
