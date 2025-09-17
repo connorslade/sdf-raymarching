@@ -8,12 +8,14 @@ fn frag(in: VertexOutput) -> @location(0) vec4<f32> {
     var pos = ctx.camera.pos;
 
     for (var i = 0; i < 100; i++) {
-        let dist = field(pos);
+        let hit = field(pos);
+        let dist = hit.dist;
+
         if dist < 0.0001 {
             // approx normal dir in world space
-            let dx = dist - field(pos + vec3(ε, 0, 0));
-            let dy = dist - field(pos + vec3(0, ε, 0));
-            let dz = dist - field(pos + vec3(0, 0, ε));
+            let dx = dist - field(pos + vec3(ε, 0, 0)).dist;
+            let dy = dist - field(pos + vec3(0, ε, 0)).dist;
+            let dz = dist - field(pos + vec3(0, 0, ε)).dist;
             let normal = normalize(vec3(dx, dy, dz));
 
             // blinn phong lighting
@@ -23,16 +25,25 @@ fn frag(in: VertexOutput) -> @location(0) vec4<f32> {
             let reflect_dir = reflect(-light_dir, normal);
             let specular = pow(max(dot(light_dir, reflect_dir), 0.0), 32.0);
 
-            let color = vec3(1.0);
-            let intensity = (diffuse + specular + 0.1) * color;
+            let intensity = (diffuse + 0.1) * hit.mat.color + specular * hit.mat.highlight;
 
-            return vec4(intensity, 1.0);
+            return vec4(tone_map(intensity), 1.0);
         }
 
         pos += ray * dist;
     }
 
     return vec4(0.0);
+}
+
+// From https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+fn tone_map(x: vec3f) -> vec3f {
+    let a = 2.51;
+    let b = 0.03;
+    let c = 2.43;
+    let d = 0.59;
+    let e = 0.14;
+    return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
 }
 
 fn camera_direction() -> vec3f {
