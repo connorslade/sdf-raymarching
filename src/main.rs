@@ -3,7 +3,7 @@ use std::{borrow::Cow, mem, time::Instant};
 use anyhow::Result;
 use encase::ShaderType;
 use tufa::{
-    bindings::UniformBuffer,
+    bindings::buffer::UniformBuffer,
     export::{
         egui::{Context, Window},
         nalgebra::{Vector2, Vector3},
@@ -25,6 +25,7 @@ struct App {
 
     camera: PerspectiveCamera,
     startup: Instant,
+    last_frame: Instant,
 }
 
 #[derive(ShaderType)]
@@ -70,6 +71,7 @@ fn main() -> Result<()> {
             uniform,
             camera: PerspectiveCamera::default(),
             startup: Instant::now(),
+            last_frame: Instant::now(),
         },
     );
 
@@ -104,7 +106,11 @@ impl Interactive for App {
         self.camera.update(ctx);
 
         Window::new("SDF Raymarching").show(ctx, |ui| {
+            let fps = self.last_frame.elapsed().as_secs_f32().recip();
+            ui.label(format!("FPS: {fps:.1}",));
             self.camera.ui(ui, "Camera");
         });
+
+        self.last_frame = Instant::now();
     }
 }
