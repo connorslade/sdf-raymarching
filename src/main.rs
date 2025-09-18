@@ -1,6 +1,8 @@
 use std::{borrow::Cow, mem, time::Instant};
 
 use anyhow::Result;
+
+use egui_snarl::{Snarl, ui::SnarlWidget};
 use encase::ShaderType;
 use tufa::{
     bindings::buffer::UniformBuffer,
@@ -19,11 +21,15 @@ use tufa::{
     pipeline::render::RenderPipeline,
 };
 
+use crate::nodes::{Node, NodeViewer};
+mod nodes;
+
 struct App {
     pipeline: RenderPipeline,
     uniform: UniformBuffer<Uniform>,
 
     camera: PerspectiveCamera,
+    snarl: Snarl<Node>,
     cursor_locked: bool,
 
     startup: Instant,
@@ -76,6 +82,7 @@ fn main() -> Result<()> {
             uniform,
 
             camera: PerspectiveCamera::default(),
+            snarl: Snarl::new(),
             cursor_locked: true,
 
             startup: Instant::now(),
@@ -125,6 +132,8 @@ impl Interactive for App {
             ui.label(format!("FPS: {fps:.1}",));
             ui.add(Slider::new(&mut self.steps, 0..=1000));
             self.camera.ui(ui, "Camera");
+
+            SnarlWidget::new().show(&mut self.snarl, &mut NodeViewer, ui);
         });
 
         self.last_frame = Instant::now();

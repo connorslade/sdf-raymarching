@@ -9,6 +9,13 @@ fn field(p: vec3f) -> Object {
     );
 }
 
+fn sdf_mix(a: Object, b: Object, t: f32) -> Object {
+    return Object(mix(a.dist, b.dist, t), Material(
+        mix(a.mat.color, b.mat.color, t),
+        mix(a.mat.highlight, b.mat.highlight, t)
+    ));
+}
+
 fn sdf_union(a: Object, b: Object) -> Object {
     if a.dist < b.dist { return a; } else { return b; }
 }
