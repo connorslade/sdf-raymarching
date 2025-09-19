@@ -1,4 +1,4 @@
-# sdf-raymarching
+# `sdf-raymarching`
 
 does what it says. uses my [@connorslade/tufa](https://github.com/connorslade/tufa) library.
 

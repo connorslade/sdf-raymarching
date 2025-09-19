@@ -2,12 +2,15 @@ use std::{borrow::Cow, mem, time::Instant};
 
 use anyhow::Result;
 
-use egui_snarl::{Snarl, ui::SnarlWidget};
+use egui_snarl::{
+    Snarl,
+    ui::{SnarlStyle, SnarlWidget},
+};
 use encase::ShaderType;
 use tufa::{
     bindings::buffer::UniformBuffer,
     export::{
-        egui::{Context, Key, Slider, Window},
+        egui::{Context, Frame, Key, Pos2, Slider, Window},
         nalgebra::{Vector2, Vector3},
         wgpu::{PowerPreference, RenderPass, ShaderModuleDescriptor, ShaderSource, ShaderStages},
         winit::{
@@ -96,6 +99,10 @@ fn main() -> Result<()> {
 }
 
 impl Interactive for App {
+    fn init(&mut self, _gcx: GraphicsCtx) {
+        // self.snarl.insert_node(Pos2::new(0.0, 0.0), Node::Output);
+    }
+
     fn render(&mut self, gcx: GraphicsCtx, render_pass: &mut RenderPass) {
         let grab_mode = [CursorGrabMode::None, CursorGrabMode::Locked][self.cursor_locked as usize];
         gcx.window.set_cursor_grab(grab_mode).unwrap();
@@ -133,7 +140,13 @@ impl Interactive for App {
             ui.add(Slider::new(&mut self.steps, 0..=1000));
             self.camera.ui(ui, "Camera");
 
-            SnarlWidget::new().show(&mut self.snarl, &mut NodeViewer, ui);
+            let mut style = SnarlStyle::new();
+            style.wire_smoothness = Some(0.1);
+            style.wire_width = Some(3.0);
+
+            SnarlWidget::new()
+                .style(style)
+                .show(&mut self.snarl, &mut NodeViewer, ui);
         });
 
         self.last_frame = Instant::now();
